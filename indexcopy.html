@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小宝和乖乖</title>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .typewriter {
+            color: #ff69b4;
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: left;
+            transition: filter 2s ease;
+            z-index: 1;
+            position: relative;
+        }
+        
+        .typewriter.finished {
+            filter: blur(1px);
+            opacity: 0.8;
+        }
+        
+        .cursor {
+            display: inline-block;
+            background-color: #ff69b4;
+            width: 2px;
+            height: 1em;
+            animation: blink 1s infinite;
+            vertical-align: baseline;
+        }
+        
+        .cursor.hidden {
+            display: none;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .hearts-container {
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            z-index: 10;
+            white-space: nowrap;  /* 添加这行防止换行 */
+        }
+        
+        .heart {
+            display: inline-block;
+            margin: 0 20px;
+            font-size: 30px;
+            color: #ff69b4;
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .heart:nth-child(2) { animation-delay: 0.5s; }
+        .heart:nth-child(3) { animation-delay: 1s; }
+        .heart:nth-child(4) { animation-delay: 1.5s; }
+        .heart:nth-child(5) { animation-delay: 2s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .word-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        
+        .falling-word {
+            position: absolute;
+            color: #ff69b4;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+        
+        .falling-word:hover {
+            transform: scale(1.2);
+            color: #ff1493;
+        }
+        
+        .falling-word.selected {
+            background: rgba(255, 105, 180, 0.4);
+            border-radius: 8px;
+            padding: 4px 8px;
+            filter: blur(1px);
+            box-shadow: 
+                0 0 15px rgba(255, 105, 180, 0.8),
+                0 0 25px rgba(255, 105, 180, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .connection-svg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 8;
+            display: none;
+        }
+        
+        .connection-line {
+            stroke: #ff1493;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        .mouse-line {
+            stroke: #ff69b4;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0.7;
+        }
+        
+        .mouse-glow {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(255, 105, 180, 0.6) 0%, rgba(255, 105, 180, 0.2) 50%, transparent 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            filter: blur(3px);
+            transition: all 0.1s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .mouse-glow.clicked {
+            background: radial-gradient(circle, rgba(255, 20, 147, 0.8) 0%, rgba(255, 20, 147, 0.4) 50%, transparent 100%);
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+        
+        .heart.filling {
+            animation: heartFill 0.8s ease-in-out;
+        }
+        
+        @keyframes heartFill {
+            0% {
+                transform: scale(1);
+                text-shadow: none;
+            }
+            50% {
+                transform: scale(1.5);
+                text-shadow: 
+                    0 0 10px rgba(255, 105, 180, 0.8),
+                    0 0 20px rgba(255, 105, 180, 0.6),
+                    0 0 30px rgba(255, 105, 180, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                text-shadow: 
+                    0 0 5px rgba(255, 105, 180, 0.5);
+            }
+        }
+        
+        
+        /* 大爱心容器 */
+        .big-heart-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 100;
+        }
+        
+        .big-heart {
+            font-size: 300px;
+            color: #ff69b4;
+            text-shadow: 
+                0 0 20px rgba(255, 105, 180, 0.8),
+                0 0 40px rgba(255, 105, 180, 0.6),
+                0 0 60px rgba(255, 105, 180, 0.4);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 播放控件 */
+        .audio-player {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 6px 12px;
+            border-radius: 0;
+            box-shadow: none;
+            border: 1px solid #ff69b4;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .play-button {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: #ff69b4;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 0;
+            flex-shrink: 0;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            width: 120px;
+            height: 3px;
+            background: #f0f0f0;
+            border-radius: 0;
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #ff69b4;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 0;
+        }
+        
+        .time-display {
+            color: #ff69b4;
+            font-size: 10px;
+            min-width: 60px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        
+        /* 汇聚动画 */
+        @keyframes convergeToCenter {
+            0% {
+                transform: translateY(0px) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(calc(50vh - 50px)) translateX(calc(var(--target-x) * 0.5)) scale(0.7);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(calc(50vh - 50px)) translateX(var(--target-x)) scale(0.1);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes bigHeartAppear {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 返回按钮样式 */
+        .return-button {
+            position: fixed;
+            top: calc(50vh + 200px);
+            left: calc(50vw - 50px);
+            transform: none;
+            border: 1px solid #ff69b4;
+            padding: 6px 12px;
+            background: transparent;
+            color: #ff69b4;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 3s forwards;
+            white-space: nowrap;
+            text-align: center;
+            z-index: 200;
+            width: 100px;
+        }
+
+        .return-button:hover {
+            background: #ff69b4;
+            color: #fff;
+        }
+
+        @keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        top: calc(50vh + 220px);
+    }
+    100% {
+        opacity: 1;
+        top: calc(50vh + 200px);
+    }
+}
+
+
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .start-screen, .name-screen, .welcome-screen {
+            text-align: center;
+            color: #ff69b4;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        /* 计时器样式 */
+        .timer-container {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 100;
+        }
+        
+        .timer-line {
+            color: #ff69b4;
+            font-size: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            background: rgba(255, 255, 255, 1);
+            padding: 0px 0px;
+            border-radius: 0px;
+            display: block;
+            text-align: center;
+        }
+        
+        /* 调整开始按钮位置 */
+        .start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #ff69b4;
+            padding: 8px 16px;  /* 进一步缩小 */
+            background: rgba(255, 255, 255, 1);
+            color: #ff69b4;
+            font-size: 14px;  /* 进一步缩小字体 */
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            transition: all 0.3s ease;
+            display: inline-block; /* 确保按钮不会拉伸 */
+        }
+        
+        .submit-button {
+            border: 1px solid #ff69b4;
+            padding: 8px 16px;  /* 进一步缩小 */
+            background: transparent;
+            color: #ff69b4;
+            font-size: 14px;  /* 进一步缩小字体 */
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            transition: all 0.3s ease;
+            display: inline-block; /* 确保按钮不会拉伸 */
+        }
+        
+        .start-button:hover, .submit-button:hover {
+            background: #ff69b4;
+            color: #fff;
+        }
+        
+        .question {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .name-input {
+            border: 1px solid #ff69b4;
+            padding: 10px 15px;
+            font-size: 16px;
+            margin-bottom: 20px; /* 改为0，让gap来控制间距 */
+            background: transparent;
+            color: #ff69b4;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+            align-self: flex-start;
+        }
+        
+        .name-input::placeholder {
+            color: rgba(255, 105, 180, 0.5);
+        }
+        
+        .welcome-text {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .enter-text {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .face-detection-screen {
+            text-align: center;
+            color: #ff69b4;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            padding-top: 180px;
+          
+        }
+        
+        .question-section {
+            text-align: center;
+            color: #ff69b4;
+            font-family: 'Courier New', Courier, monospace;
+            animation: fadeInUp 0.8s ease-out;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px; /* 名字框和确认框之间的距离 */
+            margin-top: 20px; /* 添加这行来创建摄像头和输入框之间的间距 */
+        }
+        
+        
+        .submit-button {
+            border: 1px solid #ff69b4; /* 改为1px，与摄像头框一致 */
+            padding: 8px 16px;
+            background: transparent;
+            color: #ff69b4;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            transition: all 0.3s ease;
+            display: inline-block;
+            align-self: flex-end; /* 右对齐 */
+            width: auto; /* 自动宽度 */
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .camera-container {
+            position: relative;
+            display: inline-block;
+            border: 1px solid #ff69b4; /* 改为1px，与其他保持一致 */
+            border-radius: 0;
+            overflow: hidden;
+            background: #000;
+            width: 320px;
+            height: 240px;
+        }
+        
+        #cameraVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* 只镜像摄像头 */
+            filter: brightness(1.0) contrast(0.6); /* 增加亮度和对比度让画面更白 */
+        }
+        
+        #faceCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* 移除 transform: scaleX(-1); 让Canvas不镜像 */
+        }
+        
+        .detection-status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #ff69b4;
+            background: none;
+            padding: 0;
+        }
+        
+        .face-detected {
+            color: #ff69b4;
+        }
+        
+        .name-screen {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+        
+        .name-screen .camera-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border: 1px solid #ff69b4;
+            border-radius: 0; /* 改为0，去掉圆角 */
+            overflow: hidden;
+        }
+        
+        .name-screen .camera-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            filter: brightness(1.2) contrast(1.1); /* 同样应用到右上角的小摄像头 */
+        }
+        
+        .name-screen .camera-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .heart-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            animation: heartFirework 2s ease-out forwards;
+            transform: translate(-50%, -50%);
+            font-family: Arial, sans-serif;
+        }
+        
+        .heart-particle.small {
+            font-size: 8px;
+        }
+        
+        .heart-particle.medium {
+            font-size: 12px;
+        }
+        
+        .heart-particle.large {
+            font-size: 16px;
+        }
+        
+        .heart-particle.light {
+            color: #ffb6c1;
+            opacity: 0.7;
+        }
+        
+        .heart-particle.normal {
+            color: #ff69b4;
+            opacity: 0.9;
+        }
+        
+        .heart-particle.dark {
+            color: #ff1493;
+            opacity: 1;
+        }
+        
+        .heart-particle.blurred {
+            filter: blur(1px);
+        }
+        
+        @keyframes heartFirework {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.2);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            60% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div class="login-container" id="loginContainer">
+        <div class="start-screen" id="startScreen">
+            <!-- 添加计时器 -->
+            <div class="timer-container" id="timerContainer">
+                <div class="timer-line" id="currentTime">今天是2025年8月28日 00:00:00</div>
+                <div class="timer-line" id="knowTimer">小宝和乖乖认识已经 0 天 0 小时 0 分钟 0 秒</div>
+                <div class="timer-line" id="togetherTimer">小宝和乖乖在一起已经 0 天 0 小时 0 分钟 0 秒</div>
+            </div>
+            
+            <div class="start-button" id="startButton">开始</div>
+            
+
+        </div>
+        
+        <div class="face-detection-screen" id="faceDetectionScreen" style="display: none;">
+            <div class="camera-container">
+                <video id="cameraVideo" autoplay muted></video>
+                <canvas id="faceCanvas"></canvas>
+                <div class="detection-status" id="detectionStatus">正在检测人脸...</div>
+            </div>
+            
+            <div class="question-section" id="questionSection" style="display: none;">
+                <input type="text" class="name-input" id="nameInput" placeholder="请输入你的名字">
+                <div class="submit-button" id="submitButton">确认</div>
+            </div>
+        </div>
+        
+        <div class="name-screen" id="nameScreen" style="display: none;">
+            <div class="question">请输入你的名字</div>
+            <input type="text" class="name-input" id="mobileNameInput" placeholder="请输入你的名字">
+            <div class="submit-button" id="mobileSubmitButton">确认</div>
+        </div>
+        
+        <div class="welcome-screen" id="welcomeScreen" style="display: none;">
+            <div class="welcome-text">原来是小宝最爱的人！</div>
+            <div class="enter-text">允许进入</div>
+        </div>
+    </div>
+    
+    <!-- 原有内容 -->
+    <div class="mouse-glow" id="mouseGlow" style="display: block;"></div>
+    <div class="typewriter" id="typewriter" style="display: none;"><span class="cursor" id="cursor"></span></div>
+    
+    <div class="hearts-container" id="heartsContainer" style="display: none;">
+        <span class="heart">♡</span>
+        <span class="heart">♡</span>
+        <span class="heart">♡</span>
+        <span class="heart">♡</span>
+        <span class="heart">♡</span>
+    </div>
+    
+    <!-- 大爱心容器 -->
+    <div class="big-heart-container" id="bigHeartContainer">
+        <div class="big-heart">♥
+            <div class="audio-player" id="audioPlayer">
+                <button class="play-button" id="playButton">▶</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="time-display" id="timeDisplay">0:00</div>
+            </div>
+        </div>
+        
+    
+    </div>
+    
+    <!-- 返回按钮移到这里，与big-heart-container同级 -->
+    <button class="return-button" id="returnButton" style="display: none;">返回主页</button>
+    
+    <div class="word-rain" id="wordRain"></div>
+    
+    <svg class="connection-svg" id="connectionSvg"></svg>
+    <script>
+
+
+        // 登录逻辑
+        const loginContainer = document.getElementById('loginContainer');
+        const startScreen = document.getElementById('startScreen');
+        const nameScreen = document.getElementById('nameScreen');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const startButton = document.getElementById('startButton');
+        const nameInput = document.getElementById('nameInput');
+        const submitButton = document.getElementById('submitButton');
+        
+        const validNames = ['乖乖', '邹沛言', 'Peiyan Zou', 'zpy', 'ZPY'];
+        
+        // 人脸检测相关变量
+        const faceDetectionScreen = document.getElementById('faceDetectionScreen');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const faceCanvas = document.getElementById('faceCanvas');
+        const detectionStatus = document.getElementById('detectionStatus');
+        let faceDetectionStream = null;
+        let detectionInterval = null;
+        let faceDetected = false;
+        let detectionStartTime = null;
+        let showLoveLabel = false; // 添加这行
+        
+        // 计时器相关
+        const currentTimeEl = document.getElementById('currentTime');
+        const knowTimerEl = document.getElementById('knowTimer');
+        const togetherTimerEl = document.getElementById('togetherTimer');
+        
+        // 重要日期
+        const knowDate = new Date('2025-01-31 00:00:00');
+        const togetherDate = new Date('2025-04-21 00:00:00');
+        
+        // 计算时间差
+        function calculateTimeDiff(startDate) {
+            const now = new Date();
+            const diff = now - startDate;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            return { days, hours, minutes, seconds };
+        }
+        
+        // 更新计时器
+        function updateTimers() {
+            // 当前时间
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hour = now.getHours().toString().padStart(2, '0');
+            const minute = now.getMinutes().toString().padStart(2, '0');
+            const second = now.getSeconds().toString().padStart(2, '0');
+            
+            currentTimeEl.textContent = `今天是${year}年${month}月${day}日 ${hour}:${minute}:${second}`;
+            
+            // 认识时间
+            const knowDiff = calculateTimeDiff(knowDate);
+            knowTimerEl.textContent = `小宝和乖乖认识已经 ${knowDiff.days} 天 ${knowDiff.hours} 小时 ${knowDiff.minutes} 分钟 ${knowDiff.seconds} 秒`;
+            
+            // 在一起时间
+            const togetherDiff = calculateTimeDiff(togetherDate);
+            togetherTimerEl.textContent = `小宝和乖乖在一起已经 ${togetherDiff.days} 天 ${togetherDiff.hours} 小时 ${togetherDiff.minutes} 分钟 ${togetherDiff.seconds} 秒`;
+        }
+        
+        // 启动计时器（只在主页显示）
+        let timerInterval = null;
+        
+        function startTimers() {
+            updateTimers();
+            timerInterval = setInterval(updateTimers, 1000);
+        }
+        
+        function stopTimers() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        // 页面加载时启动计时器
+        startTimers();
+        
+        
+        // 修改开始按钮点击事件，停止计时器
+           // 添加设备检测函数
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           ('ontouchstart' in window) || 
+           (navigator.maxTouchPoints > 0);
+}
+
+const isMobile = isMobileDevice();
+
+// 修改开始按钮点击事件
+startButton.addEventListener('click', () => {
+    stopTimers();
+    startScreen.style.display = 'none';
+    
+    if (isMobile) {
+        // 移动端直接跳到姓名输入
+        nameScreen.style.display = 'block';
+        nameInput.focus();
+    } else {
+        // 桌面端保持原有的人脸检测流程
+        faceDetectionScreen.style.display = 'block';
+        startFaceDetection();
+    }
+});
+        
+        // 启动人脸检测
+        async function startFaceDetection() {
+            try {
+                // 修改模型加载路径
+                await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
+                
+                // 获取摄像头
+                faceDetectionStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 320, height: 240 } 
+                });
+                cameraVideo.srcObject = faceDetectionStream;
+                
+                // 设置canvas尺寸
+                faceCanvas.width = 320;
+                faceCanvas.height = 240;
+                
+                // 开始检测
+                cameraVideo.addEventListener('loadedmetadata', () => {
+                    startRealTimeDetection();
+                });
+                
+            } catch (error) {
+                console.error('人脸检测启动失败:', error);
+                detectionStatus.textContent = '摄像头启动失败，请检查权限';
+            }
+        }
+        
+        // 实时人脸检测
+        function startRealTimeDetection() {
+            const canvas = faceCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            detectionInterval = setInterval(async () => {
+                if (cameraVideo.readyState === 4) {
+                    const detections = await faceapi.detectAllFaces(cameraVideo, new faceapi.TinyFaceDetectorOptions());
+                    
+                    // 清除canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    if (detections.length > 0) {
+                        // 绘制人脸框
+                        detections.forEach(detection => {
+                            const { x, y, width, height } = detection.box;
+                            
+                            // 由于视频被镜像，需要调整x坐标
+                            const mirroredX = canvas.width - x - width;
+                            
+                            // 绘制更明显的粉色边框，使用与外框一样的颜色
+                            ctx.strokeStyle = '#ff69b4';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(mirroredX, y, width, height);
+                            
+                            // 显示"Person"或"Love"标签，使用与外框一样的颜色
+                            ctx.fillStyle = '#ff69b4';
+                            ctx.font = '16px "Courier New", Courier, monospace';
+                            const label = showLoveLabel ? 'Love' : 'Person';
+                            ctx.fillText(label, mirroredX, y - 5);
+                            
+                            // 在问题显示后不显示百分比
+                            const questionSection = document.getElementById('questionSection');
+                            if (questionSection.style.display === 'none') {
+                                const confidence = Math.round(detection.score * 100);
+                                ctx.font = '14px "Courier New", Courier, monospace';
+                                ctx.fillText(`${confidence}%`, mirroredX, y + height + 15);
+                            }
+                        });
+                        
+                        // 首次检测到人脸
+                        if (!faceDetected) {
+                            faceDetected = true;
+                            detectionStartTime = Date.now();
+                            detectionStatus.textContent = '检测到人脸！';
+                            detectionStatus.classList.add('face-detected'); /* 添加face-detected类 */
+                        }
+                        
+                        // 检测到人脸3秒后显示问题
+                        if (faceDetected && Date.now() - detectionStartTime > 3000) {
+                            // 隐藏检测状态，显示问题
+                            detectionStatus.style.display = 'none';
+                            document.getElementById('questionSection').style.display = 'block';
+                            nameInput.focus();
+                        }
+                    } else {
+                        // 未检测到人脸时重置状态
+                        if (faceDetected) {
+                            faceDetected = false;
+                            detectionStartTime = null;
+                            detectionStatus.textContent = '正在检测人脸...';
+                        }
+                    }
+                }
+            }, 100);
+        }
+        
+        // 停止人脸检测
+        function stopFaceDetection() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            
+            if (faceDetectionStream) {
+                faceDetectionStream.getTracks().forEach(track => track.stop());
+                faceDetectionStream = null;
+            }
+        }
+        
+        // 添加移动端元素引用
+        const mobileNameInput = document.getElementById('mobileNameInput');
+        const mobileSubmitButton = document.getElementById('mobileSubmitButton');
+
+        // 确认按钮点击事件
+        submitButton.addEventListener('click', checkName);
+        
+        // 回车键提交
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkName();
+            }
+        });
+
+        // 为移动端添加事件监听
+        mobileSubmitButton.addEventListener('click', checkMobileName);
+        mobileNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkMobileName();
+            }
+        });
+
+        // 移动端姓名检查函数
+        function checkMobileName() {
+            const inputName = mobileNameInput.value.trim();
+            if (validNames.includes(inputName)) {
+                // 移动端流程
+                nameScreen.style.display = 'none';
+                welcomeScreen.style.display = 'block';
+                
+                // 2秒后进入主界面
+                setTimeout(() => {
+                    loginContainer.style.display = 'none';
+                    document.querySelector('.typewriter').style.display = 'block';
+                    document.querySelector('.hearts-container').style.display = 'flex';
+                    document.getElementById('mouseGlow').style.display = 'block';
+                    typeWriter();
+                }, 2000);
+            } else {
+                mobileNameInput.style.borderColor = '#ff4444';
+                mobileNameInput.value = '';
+                mobileNameInput.placeholder = '请输入正确的名字';
+                setTimeout(() => {
+                    mobileNameInput.style.borderColor = '#ff69b4';
+                    mobileNameInput.placeholder = '请输入你的名字';
+                }, 1000);
+            }
+        }
+        
+        // 保持原有的checkName函数用于桌面端
+        function checkName() {
+            const inputName = nameInput.value.trim();
+            if (validNames.includes(inputName)) {
+                showLoveLabel = true;
+                // 桌面端保持原有流程
+                nameInput.style.display = 'none';
+                submitButton.style.display = 'none';
+                
+                const questionSection = document.getElementById('questionSection');
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'answer-text';
+                answerDiv.textContent = inputName;
+                answerDiv.style.cssText = `
+                    color: #ff69b4;
+                    font-size: 18px;
+                    font-family: 'Courier New', Courier, monospace;
+                    margin-bottom: 30px;
+                    animation: fadeIn 0.5s ease-in;
+                `;
+                questionSection.appendChild(answerDiv);
+                
+                const welcomeDiv = document.createElement('div');
+                welcomeDiv.className = 'welcome-message';
+                welcomeDiv.style.cssText = `
+                    color: #ff69b4;
+                    font-family: 'Courier New', Courier, monospace;
+                    text-align: center;
+                    margin-top: 20px;
+                `;
+                questionSection.appendChild(welcomeDiv);
+                
+                const welcomeText = '原来是小宝最爱的人！\n允许进入';
+                let i = 0;
+                const typeWelcome = () => {
+                    if (i < welcomeText.length) {
+                        if (welcomeText.charAt(i) === '\n') {
+                            welcomeDiv.innerHTML += '<br>';
+                        } else {
+                            welcomeDiv.textContent += welcomeText.charAt(i);
+                        }
+                        i++;
+                        setTimeout(typeWelcome, 100);
+                    } else {
+                        setTimeout(() => {
+                            loginContainer.style.display = 'none';
+                            stopFaceDetection();
+                            document.querySelector('.typewriter').style.display = 'block';
+                            document.querySelector('.hearts-container').style.display = 'flex';
+                            document.getElementById('mouseGlow').style.display = 'block';
+                            typeWriter();
+                        }, 2000);
+                    }
+                };
+                
+                setTimeout(typeWelcome, 500);
+            } else {
+                nameInput.style.borderColor = '#ff4444';
+                nameInput.value = '';
+                nameInput.placeholder = '请输入正确的名字';
+                setTimeout(() => {
+                    nameInput.style.borderColor = '#ff69b4';
+                    nameInput.placeholder = '请输入你的名字';
+                }, 1000);
+            }
+        }
+        
+        const code = `const 小宝 = Symbol("小宝");
+const 乖乖 = Symbol("乖乖");
+
+const timeline = new Map([
+  ["1.31.2025", "相识"],
+  ["2.16.2025", "第一次见面"],
+  ["2.20.2025", "去看马戏团"],
+  ["2.27.2025", "一起去看花样年华"],
+  ["3.8.2025",  "开了zipcar的奇幻夜晚"],
+  ["3.20.2025",  "飞机上和乖乖告白”],
+  ["4.19.2025", "一起去土耳其，很开心"],
+  ["4.21.2025", "正式在一起啦"],
+  ["5.25.2025", "陪我过了生日"],
+  ["7.12.2025", "去了巴黎，吃美食逛街"],
+  ["7.31.2025", "一百天啦！有花花和礼物"]
+]);
+
+loop.every("day", () => {
+  screen.print("想你");
+  love(小宝, 乖乖).grow("一点点");
+  wish(乖乖).to(小宝).send("抱抱和亲亲");
+});
+
+loop.every("week", () => {
+  date(小宝, 乖乖).plan("看电影 / 吃饭 / 按摩");
+  massage.session(小宝, 乖乖).start();
+});
+
+occasionally.withChance(0.33, () => {
+  surprise.from(乖乖).to(小宝).deliver("花花 / 小礼物");
+  screen.print("小宝超开心！爱你");
+});
+
+events.on("open", () => {
+  heart.of(乖乖).rate += 7;
+  screen.print("乖乖，七夕快乐！——小宝");
+});
+
+(() => events.emit("open"))();
+
+`;
+
+        const typewriterElement = document.getElementById('typewriter');
+        const cursorElement = document.getElementById('cursor');
+        const heartsContainer = document.getElementById('heartsContainer');
+        const wordRain = document.getElementById('wordRain');
+        const connectionSvg = document.getElementById('connectionSvg');
+        
+        let i = 0;
+        let selectedWords = [];
+        let connections = [];
+        let mouseX = 0;
+        let mouseY = 0;
+        let mouseLine = null;
+        let filledHearts = 0;
+        
+        function createWordRain() {
+            setInterval(() => {
+                // 核心词汇
+                const coreWords = ['乖乖', '小宝', '喜欢', '爱', '♥♥♥'];
+                const otherWords = ['贴贴', '晚安', '想念', '亲亲', '抱抱', '陪伴', '温柔', '美好', '幸福', '快乐', '浪漫', '心动', '依恋', '珍惜', '牵手', '拥抱', '微笑', '暖心', '可爱'];
+                
+                // 70%概率选择核心词汇，30%概率选择其他词汇
+                const word = Math.random() < 0.7 
+                    ? coreWords[Math.floor(Math.random() * coreWords.length)]
+                    : otherWords[Math.floor(Math.random() * otherWords.length)];
+                    
+                const wordElement = document.createElement('div');
+                wordElement.className = 'falling-word';
+                wordElement.textContent = word;
+                
+                // 随机初始水平位置
+                const initialX = Math.random() * (window.innerWidth - 100);
+                wordElement.style.left = initialX + 'px';
+                wordElement.style.top = '-50px';
+                
+                wordElement.addEventListener('click', () => selectWord(wordElement, word));
+                
+                wordRain.appendChild(wordElement);
+                
+                let position = -50;
+                let horizontalOffset = 0;
+                // 随机风力强度和方向
+                const windStrength = (Math.random() - 0.5) * 4; // -2 到 2 的随机值
+                const swayAmplitude = 20 + Math.random() * 30; // 摆动幅度 20-50px
+                const swaySpeed = 0.02 + Math.random() * 0.03; // 摆动速度
+                let time = 0;
+                
+                const fallInterval = setInterval(() => {
+                    position += 2;
+                    time += swaySpeed;
+                    
+                    // 计算水平偏移：风力 + 正弦波摆动
+                    horizontalOffset += windStrength * 0.5;
+                    const swayOffset = Math.sin(time) * swayAmplitude;
+                    const totalHorizontalOffset = horizontalOffset + swayOffset;
+                    
+                    wordElement.style.top = position + 'px';
+                    wordElement.style.left = (initialX + totalHorizontalOffset) + 'px';
+                    
+                    // 添加轻微的旋转效果
+                    const rotation = Math.sin(time * 1.5) * 5; // -5度到5度的旋转
+                    wordElement.style.transform = `rotate(${rotation}deg)`;
+                    
+                    if (position > window.innerHeight) {
+                        clearInterval(fallInterval);
+                        if (wordElement.parentNode) {
+                            wordElement.parentNode.removeChild(wordElement);
+                        }
+                    }
+                }, 50);
+            }, 1500);
+        }
+        
+        function selectWord(element, word) {
+            element.classList.add('selected');
+            const rect = element.getBoundingClientRect();
+            selectedWords.push({
+                element, 
+                word, 
+                x: rect.left + rect.width / 2, 
+                y: rect.top + rect.height / 2
+            });
+            
+            if (selectedWords.length > 1) {
+                drawConnection(selectedWords[selectedWords.length - 2], selectedWords[selectedWords.length - 1]);
+            }
+            
+            updateMouseLine();
+            
+            if (selectedWords.length === 3) {
+                checkForHeartGeneration();
+            }
+        }
+        
+        // 修复连线跟随问题
+        function updateAllConnections() {
+            // 只有在有选中文字时才更新
+            if (selectedWords.length === 0) return;
+            
+            // 更新选中文字的位置
+            selectedWords.forEach(wordObj => {
+                if (wordObj.element && wordObj.element.parentNode) {
+                    const rect = wordObj.element.getBoundingClientRect();
+                    wordObj.x = rect.left + rect.width / 2;
+                    wordObj.y = rect.top + rect.height / 2;
+                }
+            });
+            
+            // 重绘所有固定连线
+            const lines = connectionSvg.querySelectorAll('.connection-line');
+            lines.forEach((line, index) => {
+                if (selectedWords[index] && selectedWords[index + 1]) {
+                    line.setAttribute('x1', selectedWords[index].x);
+                    line.setAttribute('y1', selectedWords[index].y);
+                    line.setAttribute('x2', selectedWords[index + 1].x);
+                    line.setAttribute('y2', selectedWords[index + 1].y);
+                }
+            });
+            
+            // 更新鼠标连线
+            if (selectedWords.length > 0 && selectedWords.length < 3 && mouseLine) {
+                const lastWord = selectedWords[selectedWords.length - 1];
+                if (lastWord.element && lastWord.element.parentNode) {
+                    const rect = lastWord.element.getBoundingClientRect();
+                    const currentX = rect.left + rect.width / 2;
+                    const currentY = rect.top + rect.height / 2;
+                    
+                    mouseLine.setAttribute('x1', currentX);
+                    mouseLine.setAttribute('y1', currentY);
+                    mouseLine.setAttribute('x2', mouseX);
+                    mouseLine.setAttribute('y2', mouseY);
+                }
+            }
+        }
+        
+        function updateMouseLine() {
+            if (selectedWords.length > 0 && selectedWords.length < 3) {
+                if (!mouseLine) {
+                    const lastWord = selectedWords[selectedWords.length - 1];
+                    const rect = lastWord.element.getBoundingClientRect();
+                    const currentX = rect.left + rect.width / 2;
+                    const currentY = rect.top + rect.height / 2;
+                    
+                    mouseLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    mouseLine.setAttribute('class', 'mouse-line');
+                    mouseLine.setAttribute('x1', currentX);
+                    mouseLine.setAttribute('y1', currentY);
+                    mouseLine.setAttribute('x2', mouseX);
+                    mouseLine.setAttribute('y2', mouseY);
+                    connectionSvg.appendChild(mouseLine);
+                }
+            } else {
+                if (mouseLine) {
+                    mouseLine.remove();
+                    mouseLine = null;
+                }
+            }
+        }
+        
+        // 启动实时更新
+        function startInteractiveMode() {
+    heartsContainer.style.display = 'block';
+    wordRain.style.display = 'block';
+    connectionSvg.style.display = 'block';
+    createWordRain();
+    
+    if (isMobile) {
+        // 移动端：3秒后自动弹出大爱心
+        setTimeout(() => {
+            // 直接跳到大爱心显示
+            heartsContainer.style.display = 'none';
+            wordRain.style.display = 'none';
+            connectionSvg.style.display = 'none';
+            
+            const bigHeartContainer = document.getElementById('bigHeartContainer');
+            bigHeartContainer.style.display = 'block';
+            bigHeartContainer.style.animation = 'bigHeartAppear 1s ease-out forwards';
+            
+            initAudioPlayer();
+        }, 3000);
+    } else {
+        // 桌面端：保持原有的连线游戏逻辑
+        setInterval(updateAllConnections, 50);
+    }
+}
+        
+        function resetSelection() {
+            selectedWords.forEach(wordObj => {
+                wordObj.element.classList.remove('selected');
+            });
+            selectedWords = [];
+            
+            // 清除所有连线
+            const lines = connectionSvg.querySelectorAll('.connection-line');
+            lines.forEach(line => line.remove());
+            
+            // 清除鼠标连线
+            if (mouseLine) {
+                mouseLine.remove();
+                mouseLine = null;
+            }
+        }
+        
+        function drawConnection(from, to) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', from.x);
+            line.setAttribute('y1', from.y);
+            line.setAttribute('x2', to.x);
+            line.setAttribute('y2', to.y);
+            line.setAttribute('class', 'connection-line');
+            connectionSvg.appendChild(line);
+            connections.push(line);
+        }
+        
+        function checkForHeartGeneration() {
+            const wordSequence = selectedWords.map(w => w.word);
+            
+            // 检查是否包含乖乖、小宝和喜欢/爱
+            const has乖乖 = wordSequence.includes('乖乖');
+            const has小宝 = wordSequence.includes('小宝');
+            const has爱情 = wordSequence.includes('喜欢') || wordSequence.includes('爱') || wordSequence.includes('♥♥♥');
+            
+            if (has乖乖 && has小宝 && has爱情) {
+                fillNextHeart();
+                // 删除showBigHeart()调用
+            }
+            
+            // 无论成功与否，都重置选择
+            setTimeout(resetSelection, 1000);
+        }
+        
+        function fillNextHeart() {
+            const hearts = document.querySelectorAll('.heart');
+            if (filledHearts < hearts.length) {
+                const heart = hearts[filledHearts];
+                
+                // 添加动画类
+                heart.classList.add('filling');
+                
+                // 变成实心
+                heart.textContent = '♥';
+                
+                // 动画结束后移除动画类
+                setTimeout(() => {
+                    heart.classList.remove('filling');
+                }, 800);
+                
+                filledHearts++;
+                
+                // 检查是否所有爱心都填满了
+                if (filledHearts === hearts.length) {
+                    setTimeout(() => {
+                        startConvergeAnimation();
+                    }, 1000); // 等待最后一个爱心动画完成
+                }
+            }
+        }
+        
+        // 汇聚动画
+        function startConvergeAnimation() {
+            const hearts = document.querySelectorAll('.heart');
+            const heartsContainer = document.getElementById('heartsContainer');
+            const bigHeartContainer = document.getElementById('bigHeartContainer');
+            
+            // 计算每个爱心到中心的偏移量
+            hearts.forEach((heart, index) => {
+                const rect = heart.getBoundingClientRect();
+                const centerX = window.innerWidth / 2;
+                const targetX = centerX - rect.left - rect.width / 2;
+                
+                heart.style.setProperty('--target-x', targetX + 'px');
+                heart.style.animation = 'convergeToCenter 2s ease-in-out forwards';
+            });
+            
+            // 2秒后隐藏小爱心，显示大爱心
+            setTimeout(() => {
+                heartsContainer.style.display = 'none';
+                bigHeartContainer.style.display = 'block';
+                bigHeartContainer.style.animation = 'bigHeartAppear 1s ease-out forwards';
+                
+                // 初始化播放控件
+                initAudioPlayer();
+            }, 2000);
+        }
+        
+        // 初始化音频播放器
+        function initAudioPlayer() {
+    const playButton = document.getElementById('playButton');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const timeDisplay = document.getElementById('timeDisplay');
+    
+    // 创建音频对象，使用新的音频文件名
+    const audio = new Audio('audio.MP3');
+    const returnButton = document.getElementById('returnButton');
+    
+    let isPlaying = false;
+    
+    // 音频加载完成后获取真实时长
+    audio.addEventListener('loadedmetadata', () => {
+        const minutes = Math.floor(audio.duration / 60);
+        const seconds = Math.floor(audio.duration % 60);
+        timeDisplay.textContent = `0:00 / ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    });
+    
+    playButton.addEventListener('click', () => {
+        if (!isPlaying) {
+            // 开始播放
+            audio.play().catch(e => {
+                console.error('音频播放失败:', e);
+            });
+            // 根据设备类型设置不同的暂停符号
+            if (isMobile) {
+                playButton.textContent = '||';  // 移动端使用兼容性更好的符号
+            } else {
+                playButton.textContent = '⏸';   // 桌面端保持原有的emoji
+            }
+            isPlaying = true;
+        } else {
+            // 暂停播放
+            audio.pause();
+            playButton.textContent = '▶';
+            isPlaying = false;
+        }
+    });
+    
+    // 实时更新进度
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
+            const percentage = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = percentage + '%';
+            
+            const currentMinutes = Math.floor(audio.currentTime / 60);
+            const currentSeconds = Math.floor(audio.currentTime % 60);
+            const totalMinutes = Math.floor(audio.duration / 60);
+            const totalSeconds = Math.floor(audio.duration % 60);
+            
+            timeDisplay.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
+    });
+    
+    // 播放结束处理
+    audio.addEventListener('ended', () => {
+        playButton.textContent = '▶';
+        isPlaying = false;
+        progressFill.style.width = '0%';
+        audio.currentTime = 0;
+
+        setTimeout(() => {
+            returnButton.style.display = 'block';
+        }, 100);
+    });
+    
+    // 进度条点击跳转
+    progressBar.addEventListener('click', (e) => {
+        if (audio.duration) {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            audio.currentTime = audio.duration * percentage;
+        }
+    });
+    
+    // 音频加载错误处理
+    audio.addEventListener('error', (e) => {
+        console.error('音频加载失败:', e);
+        timeDisplay.textContent = '音频加载失败';
+    });
+    
+    // 返回按钮点击事件
+        returnButton.addEventListener('click', () => {
+            // 停止所有音频和动画
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            
+            // 隐藏主界面元素
+            document.querySelector('.typewriter').style.display = 'none';
+            document.querySelector('.hearts-container').style.display = 'none';
+            document.getElementById('mouseGlow').style.display = 'none';
+            document.querySelector('.word-rain').style.display = 'none';
+            document.querySelector('.connection-svg').style.display = 'none';
+            returnButton.style.display = 'none';
+            
+            // 显示登录界面和主页
+            loginContainer.style.display = 'flex';
+            startScreen.style.display = 'block';
+            faceDetectionScreen.style.display = 'none';
+            nameScreen.style.display = 'none';
+            welcomeScreen.style.display = 'none';
+            
+            // 重新启动计时器
+            startTimers();
+        });
+        }
+        
+        // 鼠标圆球跟随效果
+        const mouseGlow = document.getElementById('mouseGlow');
+        
+        // 创建多样化的烟花爱心粒子效果
+        function createHeartFirework(x, y) {
+            const particleCount = 12;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'heart-particle';
+                particle.textContent = '♥';
+                
+                // 随机大小
+                const sizes = ['small', 'medium', 'large'];
+                const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+                particle.classList.add(randomSize);
+                
+                // 随机颜色深浅
+                const colors = ['light', 'normal', 'dark'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.classList.add(randomColor);
+                
+                // 随机模糊效果（30%概率）
+                if (Math.random() < 0.3) {
+                    particle.classList.add('blurred');
+                }
+                
+                // 均匀分布的角度
+                const angle = (360 / particleCount) * i;
+                // 随机距离，根据大小调整
+                let baseDistance = 60;
+                if (randomSize === 'small') baseDistance = 40;
+                if (randomSize === 'large') baseDistance = 80;
+                const distance = baseDistance + Math.random() * 60;
+                
+                // 计算最终位置
+                const radian = angle * Math.PI / 180;
+                const endX = x + Math.cos(radian) * distance;
+                const endY = y + Math.sin(radian) * distance;
+                
+                // 设置初始位置
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                // 添加到页面
+                document.body.appendChild(particle);
+                
+                // 立即开始动画到最终位置
+                particle.style.transition = 'left 2s ease-out, top 2s ease-out';
+                setTimeout(() => {
+                    particle.style.left = endX + 'px';
+                    particle.style.top = endY + 'px';
+                }, 10);
+                
+                // 2秒后移除粒子
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 2000);
+            }
+        }
+        
+        // 鼠标跟踪
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    
+    // 更新圆球位置
+    mouseGlow.style.left = mouseX + 'px';
+    mouseGlow.style.top = mouseY + 'px';
+    
+    updateMouseLine();
+    
+    // 降低随机生成频率
+    if (Math.random() < 0.02) { // 2%的概率生成烟花
+        createHeartFirework(mouseX, mouseY);
+    }
+});
+
+// 点击效果
+document.addEventListener('mousedown', () => {
+    mouseGlow.classList.add('clicked');
+    createHeartFirework(mouseX, mouseY); // 点击时必定生成烟花
+});
+
+document.addEventListener('mouseup', () => {
+    mouseGlow.classList.remove('clicked');
+});
+
+// 添加触摸事件支持
+if (isMobile) {
+    // 触摸开始事件
+    document.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        // 只在非交互元素上阻止默认行为
+        if (!target.closest('input') && !target.closest('button') && 
+            !target.classList.contains('falling-word')) {
+            e.preventDefault();
+        }
+        
+        // 更新鼠标位置用于烟花效果
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+        
+        // 触发点击烟花效果
+        createHeartFirework(mouseX, mouseY);
+        
+        // 模拟鼠标按下效果
+        mouseGlow.classList.add('clicked');
+        mouseGlow.style.left = mouseX + 'px';
+        mouseGlow.style.top = mouseY + 'px';
+    });
+    
+    // 触摸移动事件
+    document.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        mouseX = touch.clientX;
+        mouseY = touch.clientY;
+        
+        // 更新圆球位置
+        mouseGlow.style.left = mouseX + 'px';
+        mouseGlow.style.top = mouseY + 'px';
+        
+        // 降低随机生成频率
+        if (Math.random() < 0.02) {
+            createHeartFirework(mouseX, mouseY);
+        }
+    });
+    
+    // 触摸结束事件
+    document.addEventListener('touchend', (e) => {
+        mouseGlow.classList.remove('clicked');
+    });
+    
+    // 为移动端的文字雨添加触摸支持（但不用于连线）
+    function createWordRainMobile() {
+        setInterval(() => {
+            const coreWords = ['乖乖', '小宝', '喜欢', '爱', '♥♥♥'];
+            const otherWords = ['贴贴', '晚安', '想念', '亲亲', '抱抱', '陪伴', '温柔', '美好', '幸福', '快乐', '浪漫', '心动', '依恋', '珍惜', '牵手', '拥抱', '微笑', '暖心', '可爱'];
+            
+            const word = Math.random() < 0.7 
+                ? coreWords[Math.floor(Math.random() * coreWords.length)]
+                : otherWords[Math.floor(Math.random() * otherWords.length)];
+                
+            const wordElement = document.createElement('div');
+            wordElement.className = 'falling-word';
+            wordElement.textContent = word;
+            
+            const initialX = Math.random() * (window.innerWidth - 100);
+            wordElement.style.left = initialX + 'px';
+            wordElement.style.top = '-50px';
+            
+            // 移动端文字雨仅作为背景，添加触摸烟花效果但不连线
+            wordElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                createHeartFirework(touch.clientX, touch.clientY);
+            });
+            
+            wordRain.appendChild(wordElement);
+            
+            let position = -50;
+            let horizontalOffset = 0;
+            const windStrength = (Math.random() - 0.5) * 4;
+            const swayAmplitude = 20 + Math.random() * 30;
+            const swaySpeed = 0.02 + Math.random() * 0.03;
+            let time = 0;
+            
+            const fallInterval = setInterval(() => {
+                position += 2;
+                time += swaySpeed;
+                
+                horizontalOffset += windStrength * 0.5;
+                const swayOffset = Math.sin(time) * swayAmplitude;
+                const totalHorizontalOffset = horizontalOffset + swayOffset;
+                
+                wordElement.style.top = position + 'px';
+                wordElement.style.left = (initialX + totalHorizontalOffset) + 'px';
+                
+                const rotation = Math.sin(time * 1.5) * 5;
+                wordElement.style.transform = `rotate(${rotation}deg)`;
+                
+                if (position > window.innerHeight) {
+                    clearInterval(fallInterval);
+                    if (wordElement.parentNode) {
+                        wordElement.parentNode.removeChild(wordElement);
+                    }
+                }
+            }, 50);
+        }, 1500);
+    }
+    
+    // 重写createWordRain函数用于移动端
+    const originalCreateWordRain = createWordRain;
+    createWordRain = createWordRainMobile;
+}
+        
+                function typeWriter() {
+            if (i < code.length) {
+                cursorElement.insertAdjacentText('beforebegin', code.charAt(i));
+                i++;
+                setTimeout(typeWriter, 50);
+            } else {
+                setTimeout(() => {
+                    cursorElement.classList.add('hidden');
+                    typewriterElement.classList.add('finished');
+                    startInteractiveMode();
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
