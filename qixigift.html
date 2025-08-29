@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>七夕快乐❤️ </title>
+    <title>七夕快乐❤️</title>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
@@ -20,6 +20,20 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* 全屏背景视频 */
+        #backgroundVideo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;  /* 视窗宽度 */
+            height: 100vh; /* 视窗高度 */
+            object-fit: cover; /* 保持比例填满屏幕 */
+            z-index: -999;
+            opacity: 0.6; /* 适当透明度 */
+            filter: contrast(1.5) brightness(1); /* 柔和背景效果 */
         }
         
         .typewriter {
@@ -346,7 +360,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #fff;
+            background: transparent; /* 完全透明 */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -357,6 +371,9 @@
             text-align: center;
             color: #ff69b4;
             font-family: 'Courier New', Courier, monospace;
+            background: transparent; /* 完全透明 */
+            padding: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* 添加文字阴影增强可读性 */
         }
         
         /* 计时器样式 */
@@ -367,6 +384,8 @@
             transform: translateX(-50%);
             text-align: center;
             z-index: 100;
+            background: transparent; /* 完全透明 */
+            padding: 15px;
         }
         
         .timer-line {
@@ -375,11 +394,12 @@
             font-family: 'Courier New', Courier, monospace;
             margin-bottom: 8px;
             line-height: 1.4;
-            background: rgba(255, 255, 255, 1);
+            background: transparent; /* 完全透明 */
             padding: 0px 0px;
             border-radius: 0px;
             display: block;
             text-align: center;
+            text-shadow: 1px 1px 2px rgba(241, 113, 160, 0.3); /* 文字阴影 */
         }
         
         /* 调整开始按钮位置 */
@@ -389,14 +409,15 @@
             left: 50%;
             transform: translate(-50%, -50%);
             border: 1px solid #ff69b4;
-            padding: 8px 16px;  /* 进一步缩小 */
-            background: rgba(255, 255, 255, 1);
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1); /* 极淡的背景 */
             color: #ff69b4;
-            font-size: 14px;  /* 进一步缩小字体 */
+            font-size: 14px;
             cursor: pointer;
             font-family: 'Courier New', Courier, monospace;
             transition: all 0.3s ease;
-            display: inline-block; /* 确保按钮不会拉伸 */
+            display: inline-block;
+            text-shadow: 1px 1px 2px rgba(241, 113, 160, 0.3);
         }
         
         .submit-button {
@@ -640,6 +661,11 @@
     </style>
 </head>
 <body>
+    <!-- 背景视频 -->
+    <video id="backgroundVideo" autoplay muted loop playsinline>
+        <source src="heart.mp4" type="video/mp4">
+    </video>
+
     <!-- 登录界面 -->
     <div class="login-container" id="loginContainer">
         <div class="start-screen" id="startScreen">
@@ -1058,7 +1084,7 @@ const timeline = new Map([
   ["2.16.2025", "第一次见面"],
   ["2.20.2025", "去看马戏团"],
   ["2.27.2025", "一起去看花样年华"],
-  ["3.08.2025",  "开了zipcar的奇幻夜晚"],
+  ["3.8.2025",  "开了zipcar的奇幻夜晚"],
   ["3.20.2025",  "飞机上和乖乖告白”],
   ["4.19.2025", "一起去土耳其，很开心"],
   ["4.21.2025", "正式在一起啦"],
